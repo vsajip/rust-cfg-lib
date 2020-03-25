@@ -1,0 +1,23 @@
+[package]
+name = "cfg-lib"
+version = "0.1.0"
+description = "A Rust library for working with the CFG configuration format."
+authors = ["Vinay Sajip <vinay_sajip@yahoo.co.uk>"]
+categories = ["config"]
+keywords = ["configuration"]
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://docs.red-dove.com/cfg/rust.html"
+repository = "https://github.com/vsajip/rust-cfg-lib.git"
+edition = "2018"
+exclude = [
+    "*.log",
+    "resources/"
+]
+
+[dependencies]
+chrono = "0.4"
+lazy_static = "1.1.0"
+log = "0.4"
+num-complex = "0.2"
+regex = "1"

@@ -112,6 +112,8 @@ string) is returned if the VARNAME is not a variable in the environment.
 Ok(Base(String("bar")))
 ```
 
+For more information, see [the CFG documentation](https://docs.red-dove.com/cfg/index.html).
+
 */
 
 #![deny(missing_docs)]

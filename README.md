@@ -93,3 +93,5 @@ You can specify a default value to be used if an environment variable isn’t pr
 >> cfg.get("foo")
 Ok(Base(String("bar")))
 ```
+
+For more information, see [the CFG documentation](https://docs.red-dove.com/cfg/index.html).

@@ -1984,6 +1984,11 @@ mod tests {
                 false,
             ),
             (
+                "neg_offset_time",
+                make_date_time!(2019, 3, 28, 23, 27, 4, 314159000, -19800),
+                false,
+            ),
+            (
                 "alt_date_time",
                 make_date_time!(2019, 3, 28, 23, 27, 4, 271828000, 0),
                 false,

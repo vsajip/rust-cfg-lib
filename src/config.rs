@@ -2899,13 +2899,18 @@ fn default_string_converter(s: &str) -> Option<Value> {
                 let offsecs = if !has_offset {
                     0
                 } else {
+                    let sign = if groups.get(13).unwrap().as_str() == "-" {
+                        -1
+                    } else {
+                        1
+                    };
                     let oh = get_i32(&groups, 14);
                     let om = get_i32(&groups, 15);
                     let os = match groups.get(17) {
                         None => 0,
                         Some(v) => v.as_str().parse::<i32>().unwrap(),
                     };
-                    os + om * 60 + oh * 3600
+                    sign * (os + om * 60 + oh * 3600)
                 };
                 let offset = FixedOffset::east(offsecs);
                 let dt = DateTime::<FixedOffset>::from_utc(datetime, offset);

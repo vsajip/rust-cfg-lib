@@ -129,7 +129,7 @@ extern crate log;
 mod tests {
     use std::collections::HashMap;
     use std::env;
-    use std::fs::File;
+    use std::fs::{canonicalize, File};
     use std::io::{BufRead, BufReader, Cursor};
     use std::path::{self};
     use std::result::Result;
@@ -1926,6 +1926,10 @@ mod tests {
                 ConfigError::InvalidPath(RecognizerError::TrailingText(loc!(1, 14))),
             ),
             (
+                "\"handlers.file/filename",
+                ConfigError::InvalidPath(RecognizerError::UnterminatedString(loc!(1, 23))),
+            ),
+            (
                 "handlers.debug.levl",
                 ConfigError::NotPresent(
                     "levl".to_string(),
@@ -2168,6 +2172,11 @@ mod tests {
             ("computed8", CV!(2)),
             ("computed9", CV!(160)),
             ("computed10", CV!(62)),
+            (
+                "interp",
+                CV!("A-4 a test_foo true 10 0.0000001 1 b [a, c, e, g]Z"),
+            ),
+            ("interp2", CV!("{a: b}")),
         ];
 
         for case in success_cases {
@@ -2188,6 +2197,10 @@ mod tests {
                         column: 16,
                     }),
                 ),
+            ),
+            (
+                "bad_interp",
+                ConfigError::ConversionError("${computed7}".to_string()),
             ),
         ];
 
@@ -2451,6 +2464,27 @@ mod tests {
                 Err(e) => panic!("unexpected failure {:?}", e),
                 Ok(v) => assert_eq!(case.1, v),
             }
+        }
+    }
+
+    #[test]
+    fn absolute_include_path() {
+        let mut p = data_file_path(&["derived", "test.cfg"]);
+        p = canonicalize(&p)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .replace("\\", "/") // for Windows - avoid escape sequence-like stuff
+            .to_string();
+
+        let source = "test: @'foo'".replace("foo", &p);
+        let mut cfg = Config::new();
+
+        cfg.load(Box::new(Cursor::new(source)))
+            .expect("couldn't load from source");
+        match cfg.get("test.computed6") {
+            Err(e) => panic!("unexpected failure {:?}", e),
+            Ok(v) => assert_eq!(2i64, v.as_i64()),
         }
     }
 

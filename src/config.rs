@@ -302,6 +302,7 @@ lazy_static! {
     static ref IDENTIFIER_PATTERN: Regex = Regex::new(r"^[\pL_](\w*)$").expect("couldn't compile regex");
     static ref ISO_DATETIME_PATTERN: Regex = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})(([ T])(((\d{2}):(\d{2}):(\d{2}))(\.\d{1,6})?(([+-])(\d{2}):(\d{2})(:(\d{2})(\.\d{1,6})?)?)?))?$").expect("couldn't compile regex");
     static ref ENV_VALUE_PATTERN: Regex = Regex::new(r"^\$(\w+)(\|(.*))?$").expect("couldn't compile regex");
+    static ref INTERPOLATION_PATTERN: Regex = Regex::new(r"\$\{([^}]+)\}").expect("couldn't compile regex");
 
     static ref NOT_STRING: &'static str = "configuration value is not a string";
     static ref NOT_INTEGER: &'static str = "configuration value is not an integer";
@@ -2332,7 +2333,7 @@ impl<'a> Parser<'a> {
 // Use a tuple struct so that we can implement PartialEq for it. This allows PartialEq to be
 // derived for containing structs.
 
-struct StringConverter(fn(&str) -> Option<Value>);
+struct StringConverter(fn(&str, &Config) -> Option<Value>);
 
 impl PartialEq for StringConverter {
     fn eq(&self, other: &Self) -> bool {
@@ -2493,6 +2494,33 @@ impl TryInto<DateTime<FixedOffset>> for Value {
                 _ => Err(&NOT_DATETIME),
             },
             _ => Err(&NOT_DATETIME),
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Base(b) => write!(f, "{}", b),
+            Value::List(lv) => {
+                let mut parts = vec![];
+
+                for item in lv {
+                    parts.push(format!("{}", item));
+                }
+                let s = parts.join(", ");
+                write!(f, "[{}]", s)
+            }
+            Value::Mapping(mv) => {
+                let mut parts = vec![];
+
+                for (k, v) in mv.iter() {
+                    parts.push(format!("{}: {}", k, v));
+                }
+                let s = parts.join(", ");
+                write!(f, "{{{}}}", s)
+            }
+            Value::Config(cv) => write!(f, "{}", cv),
         }
     }
 }
@@ -2857,7 +2885,7 @@ fn make_node(v: InternalValue) -> Rc<RefCell<InternalValue>> {
     Rc::new(RefCell::new(v))
 }
 
-fn default_string_converter(s: &str) -> Option<Value> {
+fn default_string_converter(s: &str, cfg: &Config) -> Option<Value> {
     let mut result = None;
 
     fn get_i32(caps: &Captures, i: usize) -> i32 {
@@ -2918,7 +2946,6 @@ fn default_string_converter(s: &str) -> Option<Value> {
             }
         }
         None => match ENV_VALUE_PATTERN.captures(s) {
-            None => {}
             Some(groups) => {
                 let name = groups.get(1).unwrap().as_str();
 
@@ -2937,6 +2964,41 @@ fn default_string_converter(s: &str) -> Option<Value> {
                     Ok(v) => result = Some(Value::from(v)),
                 }
             }
+            None => match INTERPOLATION_PATTERN.captures(s) {
+                None => {}
+                Some(_) => {
+                    let mut failed = false;
+                    let mut cp = 0;
+                    let mut parts = vec![];
+
+                    for m in INTERPOLATION_PATTERN.find_iter(s) {
+                        let sp = m.start();
+                        let ep = m.end();
+                        let path = &s[sp + 2..ep - 1];
+
+                        if cp < sp {
+                            parts.push(s[cp..sp].to_string());
+                        }
+                        match cfg.get(path) {
+                            Err(_) => {
+                                failed = true;
+                                break;
+                            }
+                            Ok(v) => {
+                                parts.push(format!("{}", v));
+                            }
+                        }
+                        cp = ep;
+                    }
+                    if !failed {
+                        if cp < s.len() {
+                            parts.push(s[cp..s.len()].to_string());
+                        }
+                        let rv = parts.join("");
+                        result = Some(Value::from(rv.as_str()));
+                    }
+                }
+            },
         },
     }
     result
@@ -4509,6 +4571,6 @@ impl Config {
     }
 
     pub(crate) fn convert_string(&self, s: &str) -> Option<Value> {
-        (self.string_converter.0)(s)
+        (self.string_converter.0)(s, &self)
     }
 }

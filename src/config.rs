@@ -890,13 +890,11 @@ impl<'a> Tokenizer<'a> {
     }
 
     pub(crate) fn push_back(&mut self, c: char) {
-        if (c == '\n') || !c.is_whitespace() {
-            let push_back_info = PushBackInfo {
-                c,
-                location: self.char_location,
-            };
-            self.pushed_back.push(push_back_info);
-        }
+        let push_back_info = PushBackInfo {
+            c,
+            location: self.char_location,
+        };
+        self.pushed_back.push(push_back_info);
     }
 
     pub(crate) fn get_char(&mut self) -> Result<Option<char>> {

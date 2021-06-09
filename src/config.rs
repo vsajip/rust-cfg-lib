@@ -1943,6 +1943,17 @@ impl<'a> Parser<'a> {
                         if k == TokenKind::Newline || k == TokenKind::Comma {
                             self.advance()?;
                             k = self.consume_new_lines()?;
+                        } else if k != TokenKind::RightCurly && k != TokenKind::EOF {
+                            let s = format!(
+                                "{} or {}",
+                                token_text(TokenKind::RightCurly),
+                                token_text(TokenKind::EOF)
+                            );
+                            return Err(RecognizerError::UnexpectedToken(
+                                s,
+                                token_text(self.next_token.kind),
+                                self.next_token.start,
+                            ));
                         }
                     }
                     Ok(ASTValue::Mapping(result))
@@ -2946,24 +2957,28 @@ fn find_in_path(fname: &str, path: &[String]) -> Option<String> {
 
 pub(crate) fn parse_path(s: &str) -> StdResult<ASTValue, RecognizerError> {
     let c = Cursor::new(s);
-    let mut parser = Parser::new(Box::new(c)).expect("unable to create parser");
 
-    if parser.next_token.kind != TokenKind::Word {
-        return Err(RecognizerError::UnexpectedToken(
-            token_text(TokenKind::Word),
-            token_text(parser.next_token.kind),
-            parser.next_token.start,
-        ));
-    }
-    match parser.primary() {
-        Ok(av) => {
-            if !parser.at_end() {
-                Err(RecognizerError::TrailingText(parser.next_token.start))
-            } else {
-                Ok(av)
+    match Parser::new(Box::new(c)) {
+        Err(e) => Err(e),
+        Ok(mut parser) => {
+            if parser.next_token.kind != TokenKind::Word {
+                return Err(RecognizerError::UnexpectedToken(
+                    token_text(TokenKind::Word),
+                    token_text(parser.next_token.kind),
+                    parser.next_token.start,
+                ));
+            }
+            match parser.primary() {
+                Ok(av) => {
+                    if !parser.at_end() {
+                        Err(RecognizerError::TrailingText(parser.next_token.start))
+                    } else {
+                        Ok(av)
+                    }
+                }
+                Err(e) => Err(e),
             }
         }
-        Err(e) => Err(e),
     }
 }
 

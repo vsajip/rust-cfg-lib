@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Vinay Sajip.
+//  Copyright (C) 2018-2021 Vinay Sajip.
 //
 /*!
 A library for working with the CFG configuration format.
@@ -2446,6 +2446,23 @@ mod tests {
                 Err(e) => panic!("unexpected failure {:?}", e),
                 Ok(v) => assert_eq!(case.1, v),
             }
+        }
+    }
+
+    #[test]
+    fn nested_include_path() {
+        let p = data_file_path(&["base", "top.cfg"]);
+        let mut ip = data_file_path(&["derived"]);
+        let mut cfg = Config::new();
+
+        cfg.add_include(&ip);
+        ip = data_file_path(&["another"]);
+        cfg.add_include(&ip);
+        cfg.load_from_file(&p).expect("failed to load forms.cfg");
+
+        match cfg.get("level1.level2.final") {
+            Err(e) => panic!("unexpected failure {:?}", e),
+            Ok(v) => assert_eq!(42i64, v.as_i64()),
         }
     }
 

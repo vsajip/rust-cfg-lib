@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Red Dove Consultants Limited
+//  Copyright (C) 2018-2021 Red Dove Consultants Limited
 //
 /*!
   This module implements code to tokenize and parse CFG source text, and query configurations.
@@ -697,7 +697,7 @@ impl fmt::Display for Token {
     }
 }
 
-/// This represents a binary node, typically used in expressions such as -A.
+/// This represents a unary node, typically used in expressions such as -A.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnaryNode {
     /// This is the kind of node, i.e. the operator.
@@ -3222,11 +3222,17 @@ impl Config {
             Ok(v) => match v {
                 InternalValue::Base(cv) => match cv {
                     Value::Base(tv) => match tv {
-                        ScalarValue::String(fname) => {
+                        ScalarValue::String(mut fname) => {
                             let mut dirs = vec![];
+                            let p = Path::new(&fname);
 
-                            dirs.push(self.root_dir.clone());
-                            dirs.extend_from_slice(&self.include_path);
+                            if p.is_absolute() {
+                                dirs.push(p.parent().unwrap().to_str().unwrap().to_string());
+                                fname = p.file_name().unwrap().to_str().unwrap().to_string();
+                            } else {
+                                dirs.push(self.root_dir.clone());
+                                dirs.extend_from_slice(&self.include_path);
+                            }
 
                             match find_in_path(&fname, &dirs) {
                                 None => Err(ConfigError::FileNotFound(fname.to_string())),
@@ -3253,6 +3259,7 @@ impl Config {
 
                                                             cfg.no_duplicates = self.no_duplicates;
                                                             cfg.context = self.context.clone();
+                                                            cfg.include_path = self.include_path.clone();
                                                             cfg.set_path(&p);
                                                             cfg.data = data;
                                                             Ok(InternalValue::Base(Value::Config(

@@ -19,10 +19,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set HOME environment variable
+    - name: Run tests on Windows after setting HOME environment variable
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
         $env:HOME = $env:HOMEPATH
         echo "$HOME"
-    - name: Run tests
+        cargo test
+    - name: Run tests on POSIX
       run: cargo test
+      if: ${{ matrix.os != 'windows-latest' }}

@@ -2117,14 +2117,25 @@ mod tests {
             Value::List(strings) => {
                 assert_eq!(CV!("Oscar Fingal O'Flahertie Wills Wilde"), strings[0]);
                 assert_eq!(CV!("size: 5\""), strings[1]);
-                assert_eq!(
-                    CV!("Triple quoted form\ncan span\n'multiple' lines"),
-                    strings[2]
-                );
-                assert_eq!(
-                    CV!("with \"either\"\nkind of 'quote' embedded within"),
-                    strings[3]
-                );
+                if cfg!(windows) {
+                    assert_eq!(
+                        CV!("Triple quoted form\r\ncan span\r\n'multiple' lines"),
+                        strings[2]
+                    );
+                    assert_eq!(
+                        CV!("with \"either\"\r\nkind of 'quote' embedded within"),
+                        strings[3]
+                    );
+                } else {
+                    assert_eq!(
+                        CV!("Triple quoted form\ncan span\n'multiple' lines"),
+                        strings[2]
+                    );
+                    assert_eq!(
+                        CV!("with \"either\"\nkind of 'quote' embedded within"),
+                        strings[3]
+                    );
+                }
             }
             _ => panic!("list expected, but got {:?}", v),
         }

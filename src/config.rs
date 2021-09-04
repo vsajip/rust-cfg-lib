@@ -1222,6 +1222,23 @@ impl<'a> Tokenizer<'a> {
                             end_location.update(&self.location);
                             continue;
                         }
+                        Some('\r') => {
+                            let nnc = get_char!(self);
+
+                            match nnc {
+                                None => {}
+                                Some('\n') => {
+                                    end_location.update(&self.location);
+                                    continue;
+                                }
+                                Some(c) => {
+                                    return Err(RecognizerError::UnexpectedCharacter(
+                                        c,
+                                        self.char_location,
+                                    ));
+                                }
+                            }
+                        }
                         Some(c) => {
                             return Err(RecognizerError::UnexpectedCharacter(
                                 c,
@@ -3339,7 +3356,8 @@ impl Config {
 
                                                             cfg.no_duplicates = self.no_duplicates;
                                                             cfg.context = self.context.clone();
-                                                            cfg.include_path = self.include_path.clone();
+                                                            cfg.include_path =
+                                                                self.include_path.clone();
                                                             cfg.set_path(&p);
                                                             cfg.data = data;
                                                             Ok(InternalValue::Base(Value::Config(

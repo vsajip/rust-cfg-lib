@@ -2506,6 +2506,12 @@ mod tests {
     }
 
     #[test]
+    fn windows_line_endings() {
+        let p = data_file_path(&["derived", "testwin.cfg"]);
+        let cfg = Config::from_file(&p).expect("failed to load testwin.cfg");
+    }
+
+    #[test]
     fn wip_locations() {
         /*
                 let p = data_file_path(&["derived", "test.cfg"]);

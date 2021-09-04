@@ -774,7 +774,7 @@ mod tests {
 
         let mut tokenizer = Tokenizer::new(Box::new(f));
 
-        for (_, p) in positions.iter().enumerate() {
+        for (_i, p) in positions.iter().enumerate() {
             let t = tokenizer.get_token().expect("a token was expected");
             let s = loc!(p[0], p[1]);
             let e = loc!(p[2], p[3]);
@@ -2508,7 +2508,7 @@ mod tests {
     #[test]
     fn windows_line_endings() {
         let p = data_file_path(&["derived", "testwin.cfg"]);
-        let cfg = Config::from_file(&p).expect("failed to load testwin.cfg");
+        let _cfg = Config::from_file(&p).expect("failed to load testwin.cfg");
     }
 
     #[test]

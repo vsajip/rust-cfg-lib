@@ -1210,7 +1210,8 @@ impl<'a> Tokenizer<'a> {
                         Some(c) => self.push_back(c),
                     }
                     kind = TokenKind::Newline;
-                    self.location.next_line();
+                    end_location.update(&self.location);
+                    end_location.column -= 1;
                     break;
                 }
                 Some('\\') => {

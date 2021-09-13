@@ -6,7 +6,6 @@ authors = ["Vinay Sajip <vinay_sajip@yahoo.co.uk>"]
 categories = ["config"]
 keywords = ["configuration"]
 license = "BSD-3-Clause"
-license-file = "LICENSE"
 readme = "README.md"
 homepage = "https://docs.red-dove.com/cfg/rust.html"
 repository = "https://github.com/vsajip/rust-cfg-lib.git"

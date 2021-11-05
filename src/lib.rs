@@ -2523,6 +2523,24 @@ mod tests {
     }
 
     #[test]
+    fn recursive_configuration() {
+        let p = data_file_path(&["derived", "recurse.cfg"]);
+        let mut cfg = Config::new();
+
+        cfg.load_from_file(&p).expect("failed to load recurse.cfg");
+
+        match cfg.get("recurse") {
+            Ok(v) => panic!("unexpected success {:?}", v),
+            Err(e) => match e {
+                ConfigError::RecursiveConfiguration(s) => {
+                    assert_eq!(s, "recurse.cfg");
+                }
+                _ => panic!("unexpected error type"),
+            },
+        }
+    }
+
+    #[test]
     fn wip_locations() {
         /*
                 let p = data_file_path(&["derived", "test.cfg"]);

@@ -2263,7 +2263,7 @@ impl<'a> Parser<'a> {
         match self.bitor_expr() {
             Err(e) => Err(e),
             Ok(mut lhs) => {
-                while COMPARISON_OPERATORS.contains(&self.next_token.kind) {
+                if COMPARISON_OPERATORS.contains(&self.next_token.kind) {
                     let spos = self.next_token.start;
                     let k = self.comparison_operator()?;
                     let boe = self.bitor_expr()?;
@@ -2855,6 +2855,9 @@ pub enum ConfigError {
     /// This error is returned if a reference cycle is detected. A list of the
     /// reference paths in the cycle, together with their locations, is returned.
     CircularReferenceError(Vec<(String, Location)>),
+    /// This error is returned if a configuration includes itself. The basename of
+    /// the configuration is returned.
+    RecursiveConfiguration(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -3038,6 +3041,17 @@ fn find_in_path(fname: &str, path: &[String]) -> Option<String> {
         }
     }
     None
+}
+
+fn same_path(s1: &String, s2: &String) -> bool {
+    let p = Path::new(s1);
+    if !p.exists() {
+        return false;
+    }
+    let p1 = canonicalize(p).unwrap();
+    let p2 = canonicalize(s2).unwrap();
+
+    p1 == p2
 }
 
 pub(crate) fn parse_path(s: &str) -> StdResult<ASTValue, RecognizerError> {
@@ -3335,6 +3349,14 @@ impl Config {
                             match find_in_path(&fname, &dirs) {
                                 None => Err(ConfigError::FileNotFound(fname.to_string())),
                                 Some(p) => {
+                                    // check the path isn't the same as ours
+                                    if same_path(&self.path, &p) {
+                                        let ep = Path::new(&p);
+                                        let s =
+                                            ep.file_name().unwrap().to_str().unwrap().to_string();
+                                        return Err(ConfigError::RecursiveConfiguration(s));
+                                    }
+
                                     match self.try_open_file(&p) {
                                         Err(e) => Err(e),
                                         Ok(f) => {

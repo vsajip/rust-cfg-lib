@@ -148,6 +148,7 @@ lazy_static! {
         map.insert('|', TokenKind::BitwiseOr);
         map.insert('^', TokenKind::BitwiseXor);
         map.insert('.', TokenKind::Dot);
+        map.insert('=', TokenKind::Assign);
         map
     };
 
@@ -1339,6 +1340,7 @@ impl<'a> Tokenizer<'a> {
                                     Some(ch2) => {
                                         if ch2 != quote {
                                             self.push_back(ch2);
+                                            self.char_location = c1_loc;
                                             self.push_back(ch1);
                                         } else {
                                             multi_line = true;
@@ -1405,29 +1407,6 @@ impl<'a> Tokenizer<'a> {
                     value = v;
                     break;
                 }
-                Some('=') => {
-                    let nc = get_char!(self);
-
-                    match nc {
-                        Some('=') => {
-                            kind = TokenKind::Equal;
-                            text.push('=');
-                            append_char!(self, text, '=', end_location);
-                            break;
-                        }
-                        Some(nch) => {
-                            kind = TokenKind::Assign;
-                            append_char!(self, text, '=', end_location);
-                            self.push_back(nch);
-                            break;
-                        }
-                        None => {
-                            kind = TokenKind::Assign;
-                            append_char!(self, text, '=', end_location);
-                            break;
-                        }
-                    }
-                }
                 Some(ch) if PUNCTUATION.contains_key(&ch) => {
                     kind = PUNCTUATION[&ch];
                     append_char!(self, text, ch, end_location);
@@ -1467,6 +1446,20 @@ impl<'a> Tokenizer<'a> {
                                     value = v;
                                 }
                                 Some(nch) => self.push_back(nch),
+                            }
+                        }
+                        '=' => {
+                            let nc = get_char!(self);
+
+                            match nc {
+                                None => {}
+                                Some('=') => {
+                                    kind = TokenKind::Equal;
+                                    append_char!(self, text, '=', end_location);
+                                }
+                                Some(nch) => {
+                                    self.push_back(nch);
+                                }
                             }
                         }
                         '<' => {

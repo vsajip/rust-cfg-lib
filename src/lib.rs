@@ -2479,23 +2479,29 @@ mod tests {
     }
 
     #[test]
-    fn absolute_include_path() {
-        let mut p = data_file_path(&["derived", "test.cfg"]);
-        p = canonicalize(&p)
+    fn include_paths() {
+        let p1 = data_file_path(&["derived", "test.cfg"]);
+        let p2 = canonicalize(p1.clone())
             .unwrap()
             .to_str()
             .unwrap()
-            .replace("\\", "/") // for Windows - avoid escape sequence-like stuff
             .to_string();
 
-        let source = "test: @'foo'".replace("foo", &p);
-        let mut cfg = Config::new();
+        let plist: [String; 2] = [p1, p2];
 
-        cfg.load(Box::new(Cursor::new(source)))
-            .expect("couldn't load from source");
-        match cfg.get("test.computed6") {
-            Err(e) => panic!("unexpected failure {:?}", e),
-            Ok(v) => assert_eq!(2i64, v.as_i64()),
+        for i in 0..plist.len() {
+            let p = plist[i]
+                .replace("\\", "/") // for Windows - avoid escape sequence-like stuff
+                .to_string();
+            let source = "test: @'foo'".replace("foo", &p);
+            let mut cfg = Config::new();
+
+            cfg.load(Box::new(Cursor::new(source)))
+                .expect("couldn't load from source");
+            match cfg.get("test.computed6") {
+                Err(e) => panic!("unexpected failure {:?}", e),
+                Ok(v) => assert_eq!(2i64, v.as_i64()),
+            }
         }
     }
 

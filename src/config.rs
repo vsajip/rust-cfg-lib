@@ -3157,7 +3157,7 @@ impl Config {
         Self {
             no_duplicates: true,
             //            strict_conversions: true,
-            root_dir: "".to_string(),
+            root_dir: env::current_dir().unwrap().to_str().unwrap().to_string(),
             path: "".to_string(),
             include_path: vec![],
             string_converter: StringConverter(default_string_converter),

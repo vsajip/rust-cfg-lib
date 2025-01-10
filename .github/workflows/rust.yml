@@ -35,5 +35,7 @@ jobs:
         rustc --version
         cargo test
     - name: Run tests on POSIX
-      run: cargo test
+      run: |
+        rustc --version
+        cargo test
       if: ${{ matrix.os != 'windows-latest' }}

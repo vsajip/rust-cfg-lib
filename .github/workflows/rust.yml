@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [ master ]
 
-  schedule:  # at 03:06 on day-of-month 6
-    - cron: '6 3 6 * *'
+  schedule:  # at 03:06 on day-of-month 5
+    - cron: '6 3 5 * *'
 
 env:
   CARGO_TERM_COLOR: always

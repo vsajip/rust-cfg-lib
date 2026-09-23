@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust-version: ['1.79.0', '1.89.0', '1.95.0']
+        rust-version: ['1.79.0', '1.89.0', '1.98.0']
 
     steps:
     - uses: actions/checkout@v4

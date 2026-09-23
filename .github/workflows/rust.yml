@@ -9,6 +9,8 @@ on:
   schedule:  # at 03:06 on day-of-month 5
     - cron: '6 3 5 * *'
 
+  workflow_dispatch:
+
 env:
   CARGO_TERM_COLOR: always
 
